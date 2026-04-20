@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>velatio.se</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@300;400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0f;
+    color: #e8e4dc;
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .name {
+    position: fixed;
+    top: 48px;
+    left: 56px;
+    z-index: 10;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.18em;
+    color: #5a5a6e;
+    text-transform: uppercase;
+  }
+
+  .tagline {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .tagline h1 {
+    font-size: clamp(42px, 8vw, 88px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: #f0ece4;
+    opacity: 0;
+    animation: fadeUp 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+  }
+
+  .tagline p {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #4a4a5e;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    animation: fadeUp 1s cubic-bezier(0.16,1,0.3,1) 0.7s forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .projects {
+    position: fixed;
+    bottom: 48px;
+    right: 56px;
+    z-index: 10;
+    text-align: right;
+  }
+
+  .projects-label {
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.2em;
+    color: #3a3a50;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .projects ul {
+    list-style: none;
+  }
+
+  .projects li {
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  .projects li:nth-child(1) { animation-delay: 1.0s; }
+  .projects li:nth-child(2) { animation-delay: 1.15s; }
+  .projects li:nth-child(3) { animation-delay: 1.3s; }
+  .projects li:nth-child(4) { animation-delay: 1.45s; }
+  .projects li:nth-child(5) { animation-delay: 1.6s; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .projects a {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    color: #5a5a72;
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .projects a::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 1px;
+    background: #3a3a52;
+    transition: width 0.2s, background 0.2s;
+  }
+
+  .projects a:hover {
+    color: #c8c4bc;
+  }
+
+  .projects a:hover::after {
+    width: 28px;
+    background: #c8c4bc;
+  }
+
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div class="grid-overlay"></div>
+
+<div class="name">velatio.se</div>
+
+<div class="tagline">
+  <h1>velatio</h1>
+  <p>// byggande &nbsp;·&nbsp; experiment &nbsp;·&nbsp; projekt</p>
+</div>
+
+<nav class="projects">
+  <div class="projects-label">projekt</div>
+  <ul>
+    <li><a href="#">swim coach q</a></li>
+    <li><a href="#">wolters kluwer</a></li>
+    <li><a href="#">photography</a></li>
+    <li><a href="#">ai experiments</a></li>
+    <li><a href="#">om mig</a></li>
+  </ul>
+</nav>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const guy = {
+  x: 120,
+  y: 0,
+  vx: 1.1,
+  frame: 0,
+  dir: 1,
+  state: 'walk',
+  lookTimer: 0,
+  lookTarget: null,
+  lookAngle: 0
+};
+
+const pois = [
+  { x: 0.25, y: 0.3 },
+  { x: 0.6,  y: 0.45 },
+  { x: 0.8,  y: 0.25 },
+  { x: 0.15, y: 0.6 },
+  { x: 0.5,  y: 0.7 },
+];
+
+let lastPoi = -1;
+let frame = 0;
+
+function pickPoi() {
+  let idx;
+  do { idx = Math.floor(Math.random() * pois.length); } while (idx === lastPoi);
+  lastPoi = idx;
+  return pois[idx];
+}
+
+function drawStickFigure(x, y, frameT, dir, lookAngle, isLooking) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir, 1);
+
+  const color = '#6a6a88';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const headR = 6;
+  const bodyLen = 14;
+  const legLen = 14;
+  const armLen = 10;
+
+  const swing = isLooking ? 0 : Math.sin(frameT * 0.18) * 0.38;
+  const bounce = isLooking ? 0 : Math.abs(Math.sin(frameT * 0.18)) * 2;
+
+  const headTiltX = isLooking ? Math.cos(lookAngle * dir) * 4 : 0;
+  const headTiltY = isLooking ? Math.sin(Math.abs(lookAngle)) * 2 - 2 : 0;
+
+  ctx.beginPath();
+  ctx.arc(headTiltX, -bodyLen - legLen * 0.4 - headR + headTiltY - bounce, headR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  const eyeY = -bodyLen - legLen * 0.4 - headR + headTiltY - bounce;
+  if (isLooking) {
+    ctx.beginPath();
+    ctx.arc(headTiltX + 3, eyeY - 1, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const bodyTopY = -bodyLen - legLen * 0.4 + headTiltY * 0.3 - bounce;
+  const bodyBotY = -legLen * 0.4 - bounce;
+  ctx.beginPath();
+  ctx.moveTo(headTiltX * 0.5, bodyTopY);
+  ctx.lineTo(0, bodyBotY);
+  ctx.stroke();
+
+  const armSwing = isLooking ? 0.4 : swing * 0.7;
+  const armRaise = isLooking && lookAngle < -0.2 ? -0.8 : 0;
+
+  ctx.beginPath();
+  ctx.moveTo(0, bodyBotY + 4);
+  ctx.lineTo(
+    -armLen * Math.cos(0.4 + armSwing + armRaise),
+    bodyBotY + 4 + armLen * Math.sin(0.4 + armSwing + armRaise)
+  );
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0, bodyBotY + 4);
+  ctx.lineTo(
+    armLen * Math.cos(0.4 - armSwing),
+    bodyBotY + 4 + armLen * Math.sin(0.4 - armSwing)
+  );
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0, bodyBotY + bodyLen * 0.1);
+  ctx.lineTo(
+    -legLen * Math.sin(0.35 + swing),
+    bodyBotY + bodyLen * 0.1 + legLen * Math.cos(0.35 + swing)
+  );
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0, bodyBotY + bodyLen * 0.1);
+  ctx.lineTo(
+    legLen * Math.sin(0.35 - swing),
+    bodyBotY + bodyLen * 0.1 + legLen * Math.cos(0.35 - swing)
+  );
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+const stars = Array.from({length: 60}, () => ({
+  x: Math.random(),
+  y: Math.random(),
+  r: Math.random() * 1.2 + 0.2,
+  a: Math.random() * 0.3 + 0.05
+}));
+
+function drawStars() {
+  stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(180, 170, 200, ${s.a})`;
+    ctx.fill();
+  });
+}
+
+function drawGaze(fromX, fromY, toX, toY) {
+  ctx.save();
+  ctx.setLineDash([3, 6]);
+  ctx.strokeStyle = 'rgba(100, 100, 130, 0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(toX, toY, 4, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(100, 100, 160, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  ctx.stroke();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  ctx.clearRect(0, 0, W, H);
+
+  drawStars();
+
+  frame++;
+
+  const groundY = H * 0.72;
+  guy.y = groundY;
+
+  if (guy.state === 'walk') {
+    guy.x += guy.vx * guy.dir;
+    guy.frame++;
+
+    if (guy.x > W - 80) { guy.dir = -1; }
+    if (guy.x < 80) { guy.dir = 1; }
+
+    if (frame % 160 === 0 && Math.random() > 0.4) {
+      guy.state = 'look';
+      guy.lookTimer = 90 + Math.floor(Math.random() * 80);
+      guy.lookTarget = pickPoi();
+    }
+
+    drawStickFigure(guy.x, guy.y, guy.frame, guy.dir, 0, false);
+
+  } else if (guy.state === 'look') {
+    guy.lookTimer--;
+
+    const tx = guy.lookTarget.x * W;
+    const ty = guy.lookTarget.y * H;
+    const dx = tx - guy.x;
+    const dy = ty - (guy.y - 35);
+    guy.lookAngle = Math.atan2(dy, Math.abs(dx));
+
+    const faceDir = dx > 0 ? 1 : -1;
+
+    if (guy.lookTimer > 0) {
+      drawGaze(guy.x, guy.y - 35, tx, ty);
+      drawStickFigure(guy.x, guy.y, guy.frame, faceDir, guy.lookAngle, true);
+    } else {
+      guy.state = 'walk';
+    }
+  }
+}
+
+animate();
+</script>
+</body>
+</html>
