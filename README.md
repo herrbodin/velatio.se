@@ -9,9 +9,8 @@ Låter som ett tech-bolag eller AI-produkt direkt
 
 ##Som domän:
 
-velatio.se ✅
-velatio.io ✅ – stark tech-känsla
-velatio.com – värt att kolla
+velatio.se ✅  – stark tech-känsla
+
 Varför det funkar så bra:
 
 Latin ger tyngd och trovärdighet
