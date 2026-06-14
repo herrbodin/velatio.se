@@ -11,6 +11,8 @@ Låter som ett tech-bolag eller AI-produkt direkt
 
 velatio.se ✅  – stark tech-känsla
 
+Levereras via Github pages till egen domän
+
 Varför det funkar så bra:
 
 Latin ger tyngd och trovärdighet
